@@ -5,6 +5,7 @@ export default function HabitForm({ onAddHabit }: any) {
   const [habit, setHabit] = useState({ name: '' });
 
   const handleSubmit = () => {
+    console.log('*** habit', habit);
     if (habit.name) {
       onAddHabit({ ...habit });
       setHabit({ name: '' });

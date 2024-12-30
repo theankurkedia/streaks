@@ -22,6 +22,7 @@ export default function DailyProgress({ habits, selectedDate, habitData, updateH
     updateHabitCompletion(selectedDate, habitId, newValue);
   };
 
+  console.log('*** habits', habits);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Daily Progress</Text>
@@ -31,7 +32,7 @@ export default function DailyProgress({ habits, selectedDate, habitData, updateH
           style={styles.habitRow}
           onPress={() => handleToggle(habit.id)}
         >
-          <Text style={styles.habitName}>{habit.name}</Text>
+          <Text style={styles.habitName}>{habit?.name}</Text>
           <Animated.View style={[
             styles.checkbox,
             {

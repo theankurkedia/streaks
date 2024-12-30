@@ -60,24 +60,24 @@ function MainApp() {
   };
 
   const fetchHabits = async () => {
-    if (isOnline) {
+    if (isOnline && user) {
       const { data, error } = await supabase
         .from('habits')
         .select('*')
         .eq('user_id', user?.id);
       if (error) console.error('Error fetching habits:', error);
       else {
-        setHabits(data);
-        await storeHabits(data);
+        setHabits(data?.filter(Boolean));
+        await storeHabits(data?.filter(Boolean));
       }
     } else {
       const storedHabits = await getHabits();
-      setHabits(storedHabits);
+      setHabits(storedHabits?.filter(Boolean));
     }
   };
 
   const fetchHabitData = async () => {
-    if (isOnline) {
+    if (isOnline && user) {
       const { data, error } = await supabase
         .from('habit_data')
         .select('*')
@@ -99,6 +99,7 @@ function MainApp() {
   };
 
   const addHabitToSupabase = async (habit: any) => {
+    if (!user) return null;
     const { data, error } = await supabase
       .from('habits')
       .insert({ name: habit.name, user_id: user?.id })
@@ -108,19 +109,20 @@ function MainApp() {
   };
 
   const addHabit = async (habit: any) => {
-    if (isOnline) {
+    if (isOnline && user) {
       const newHabit = await addHabitToSupabase(habit);
-      setHabits([...habits, newHabit]);
-      await storeHabits([...habits, newHabit]);
+      setHabits([...habits, newHabit]?.filter(Boolean));
+      await storeHabits([...habits, newHabit]?.filter(Boolean));
     } else {
       const newHabit = { ...habit, id: Date.now(), user_id: user?.id };
-      setHabits([...habits, newHabit]);
-      await storeHabits([...habits, newHabit]);
+      setHabits([...habits, newHabit]?.filter(Boolean));
+      await storeHabits([...habits, newHabit]?.filter(Boolean));
       await addOfflineAction({ type: 'addHabit', habit: newHabit });
     }
   };
 
   const updateHabitCompletionInSupabase = async (date: any, habitId: any, completed: any) => {
+    if (!user) return;
     const { error } = await supabase
       .from('habit_data')
       .upsert({
@@ -149,7 +151,7 @@ function MainApp() {
       },
     });
 
-    if (isOnline) {
+    if (isOnline && user) {
       await updateHabitCompletionInSupabase(dateString, habitId, completed);
     } else {
       await addOfflineAction({ type: 'updateHabitCompletion', date: dateString, habitId, completed });
