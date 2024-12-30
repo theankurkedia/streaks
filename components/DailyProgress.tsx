@@ -35,11 +35,11 @@ export default function DailyProgress({ habits, selectedDate, habitData, updateH
           <Animated.View style={[
             styles.checkbox,
             {
-              backgroundColor: animatedValues[index].interpolate({
+              backgroundColor: animatedValues[index]?.interpolate({
                 inputRange: [0, 1],
                 outputRange: ['#fff', '#007AFF'],
               }),
-              borderColor: animatedValues[index].interpolate({
+              borderColor: animatedValues[index]?.interpolate({
                 inputRange: [0, 1],
                 outputRange: ['#666', '#007AFF'],
               }),
