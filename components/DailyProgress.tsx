@@ -22,7 +22,6 @@ export default function DailyProgress({ habits, selectedDate, habitData, updateH
     updateHabitCompletion(selectedDate, habitId, newValue);
   };
 
-  console.log('*** habits', habits);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Daily Progress</Text>
