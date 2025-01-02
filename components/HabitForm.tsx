@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 
 export default function HabitForm({ onAddHabit }: any) {
   const [habit, setHabit] = useState({ name: '' });
@@ -18,7 +24,7 @@ export default function HabitForm({ onAddHabit }: any) {
         style={styles.input}
         value={habit.name}
         onChangeText={(text) => setHabit({ ...habit, name: text })}
-        placeholder="e.g., Exercise"
+        placeholder='e.g., Exercise'
       />
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Add Habit</Text>
@@ -56,4 +62,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

@@ -4,7 +4,7 @@ const HABITS_KEY = '@habits';
 const HABIT_DATA_KEY = '@habitData';
 const OFFLINE_ACTIONS_KEY = '@offlineActions';
 
-export const storeHabits = async (habits) => {
+export const storeHabits = async (habits: any) => {
   try {
     await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
   } catch (e) {
@@ -22,7 +22,7 @@ export const getHabits = async () => {
   }
 };
 
-export const storeHabitData = async (habitData) => {
+export const storeHabitData = async (habitData: any) => {
   try {
     await AsyncStorage.setItem(HABIT_DATA_KEY, JSON.stringify(habitData));
   } catch (e) {
@@ -40,7 +40,7 @@ export const getHabitData = async () => {
   }
 };
 
-export const addOfflineAction = async (action) => {
+export const addOfflineAction = async (action: any) => {
   try {
     const actions = await getOfflineActions();
     actions.push(action);
@@ -67,4 +67,3 @@ export const clearOfflineActions = async () => {
     console.error('Error clearing offline actions:', e);
   }
 };
-

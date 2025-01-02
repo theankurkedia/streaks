@@ -1,12 +1,26 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDate } from '../utils/date';
 
-export default function DailyProgress({ habits, selectedDate, habitData, updateHabitCompletion }: any) {
-  const dateString = selectedDate.toISOString().split('T')[0];
+export default function DailyProgress({
+  habits,
+  selectedDate,
+  habitData,
+  updateHabitCompletion,
+}: any) {
+  const dateString = formatDate(selectedDate);
   const dayData = habitData[dateString] || {};
 
-  const animatedValues = useRef(habits.map(() => new Animated.Value(0))).current;
+  const animatedValues = useRef(
+    habits.map(() => new Animated.Value(0))
+  ).current;
 
   useEffect(() => {
     animatedValues.forEach((value: any, index: any) => {
@@ -25,34 +39,22 @@ export default function DailyProgress({ habits, selectedDate, habitData, updateH
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Daily Progress</Text>
-      {habits.map((habit: any, index: any) => (
-        <TouchableOpacity
-          key={habit.id}
-          style={styles.habitRow}
-          onPress={() => handleToggle(habit.id)}
-        >
-          <Text style={styles.habitName}>{habit?.name}</Text>
-          <Animated.View style={[
-            styles.checkbox,
-            {
-              backgroundColor: animatedValues[index]?.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['#fff', '#007AFF'],
-              }),
-              borderColor: animatedValues[index]?.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['#666', '#007AFF'],
-              }),
-            },
-          ]}>
+      {habits.map((habit: any, index: any) => {
+        return (
+          <TouchableOpacity
+            key={habit.id}
+            style={styles.habitRow}
+            onPress={() => handleToggle(habit.id)}
+          >
+            <Text style={styles.habitName}>{habit?.name}</Text>
             <Ionicons
-              name={dayData[habit.id] ? 'checkmark' : 'square-outline'}
+              name={dayData[habit.id] ? 'checkbox' : 'square-outline'}
               size={20}
-              color="#fff"
+              color={dayData[habit.id] ? '#007AFF' : undefined}
             />
-          </Animated.View>
-        </TouchableOpacity>
-      ))}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -88,4 +90,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
