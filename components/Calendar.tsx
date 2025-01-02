@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDate } from '../utils/date';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function Calendar({ selectedDate, onSelectDate, habitData, onLongPress }: any) {
+export default function Calendar({
+  selectedDate,
+  onSelectDate,
+  habitData,
+  onLongPress,
+}: any) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const getDaysInMonth = (date: any) => {
@@ -18,15 +30,19 @@ export default function Calendar({ selectedDate, onSelectDate, habitData, onLong
   const { daysInMonth, firstDayOfMonth } = getDaysInMonth(currentMonth);
 
   const handlePrevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+    );
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+    );
   };
 
   const getProgressForDate = (date: any) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatDate(date);
     const dayData = habitData[dateString];
     if (!dayData) return 0;
 
@@ -45,13 +61,16 @@ export default function Calendar({ selectedDate, onSelectDate, habitData, onLong
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handlePrevMonth}>
-          <Ionicons name="chevron-back" size={24} color="black" />
+          <Ionicons name='chevron-back' size={24} color='black' />
         </TouchableOpacity>
         <Text style={styles.monthYear}>
-          {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          {currentMonth.toLocaleString('default', {
+            month: 'long',
+            year: 'numeric',
+          })}
         </Text>
         <TouchableOpacity onPress={handleNextMonth}>
-          <Ionicons name="chevron-forward" size={24} color="black" />
+          <Ionicons name='chevron-forward' size={24} color='black' />
         </TouchableOpacity>
       </View>
       <View style={styles.weekDays}>
@@ -67,8 +86,13 @@ export default function Calendar({ selectedDate, onSelectDate, habitData, onLong
         ))}
         {Array.from({ length: daysInMonth }).map((_, index) => {
           const day = index + 1;
-          const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-          const isSelected = selectedDate.toDateString() === date.toDateString();
+          const date = new Date(
+            currentMonth.getFullYear(),
+            currentMonth.getMonth(),
+            day
+          );
+          const isSelected =
+            selectedDate.toDateString() === date.toDateString();
           const progress = getProgressForDate(date);
           const progressColor = getProgressColor(progress);
 
@@ -79,14 +103,18 @@ export default function Calendar({ selectedDate, onSelectDate, habitData, onLong
               onPress={() => onSelectDate(date)}
               onLongPress={() => onLongPress(date)}
             >
-              <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>{day}</Text>
+              <Text
+                style={[styles.dayText, isSelected && styles.selectedDayText]}
+              >
+                {day}
+              </Text>
               <Animated.View
                 style={[
                   styles.progressBar,
                   {
                     width: `${progress}%`,
                     backgroundColor: progressColor,
-                  }
+                  },
                 ]}
               />
             </TouchableOpacity>
@@ -155,4 +183,3 @@ const styles = StyleSheet.create({
     height: 3,
   },
 });
-

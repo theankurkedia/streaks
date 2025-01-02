@@ -1,16 +1,30 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDate } from '../utils/date';
 
-export default function DayDetailsModal({ visible, onClose, date, habits, habitData }: any) {
+export default function DayDetailsModal({
+  visible,
+  onClose,
+  date,
+  habits,
+  habitData,
+}: any) {
   if (!date) return null;
 
-  const dateString = date.toISOString().split('T')[0];
+  const dateString = formatDate(date);
   const dayData = habitData[dateString] || {};
 
   return (
     <Modal
-      animationType="slide"
+      animationType='slide'
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
@@ -18,10 +32,14 @@ export default function DayDetailsModal({ visible, onClose, date, habits, habitD
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={24} color="black" />
+            <Ionicons name='close' size={24} color='black' />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>
-            {date.toLocaleDateString('default', { month: 'long', day: 'numeric', year: 'numeric' })}
+            {date.toLocaleDateString('default', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
           </Text>
           <ScrollView style={styles.habitList}>
             {habits.map((habit: any) => (
@@ -90,4 +108,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

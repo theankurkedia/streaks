@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, SafeAreaView, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import NetInfo from '@react-native-community/netinfo';
-import { supabase } from '../supabaseConfig';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import Calendar from '../components/Calendar';
 import HabitForm from '../components/HabitForm';
 import DailyProgress from '../components/DailyProgress';
-import MonthlyAnalytics from '../components/MonthlyAnalytics';
+// import MonthlyAnalytics from '../components/MonthlyAnalytics';
 import DayDetailsModal from '../components/DayDetailsModal';
 import SignIn from '../components/SignIn';
 import {
@@ -19,6 +18,13 @@ import {
   getOfflineActions,
   clearOfflineActions,
 } from '../utils/offlineStorage';
+import { formatDate } from '../utils/date';
+import {
+  addHabitToDb,
+  getHabitDataFromDb,
+  getHabitsFromDb,
+  updateHabitCompletionInDb,
+} from '../services/habits';
 
 function MainApp() {
   const { user, loading } = useAuth();
@@ -30,7 +36,7 @@ function MainApp() {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       setIsOnline(state.isConnected ?? false);
       if (state.isConnected) {
         syncOfflineActions();
@@ -51,9 +57,14 @@ function MainApp() {
     const offlineActions = await getOfflineActions();
     for (const action of offlineActions) {
       if (action.type === 'addHabit') {
-        await addHabitToSupabase(action.habit);
+        await addHabitToDb(user, action.habit);
       } else if (action.type === 'updateHabitCompletion') {
-        await updateHabitCompletionInSupabase(action.date, action.habitId, action.completed);
+        await updateHabitCompletionInDb(
+          user,
+          action.date,
+          action.habitId,
+          action.completed
+        );
       }
     }
     await clearOfflineActions();
@@ -61,10 +72,7 @@ function MainApp() {
 
   const fetchHabits = async () => {
     if (isOnline && user) {
-      const { data, error } = await supabase
-        .from('habits')
-        .select('*')
-        .eq('user_id', user?.id);
+      const { data, error } = await getHabitsFromDb(user);
       if (error) console.error('Error fetching habits:', error);
       else {
         setHabits(data?.filter(Boolean));
@@ -78,10 +86,7 @@ function MainApp() {
 
   const fetchHabitData = async () => {
     if (isOnline && user) {
-      const { data, error } = await supabase
-        .from('habit_data')
-        .select('*')
-        .eq('user_id', user?.id);
+      const { data, error } = await getHabitDataFromDb(user);
       if (error) console.error('Error fetching habit data:', error);
       else {
         const formattedData: any = {};
@@ -98,19 +103,9 @@ function MainApp() {
     }
   };
 
-  const addHabitToSupabase = async (habit: any) => {
-    if (!user) return null;
-    const { data, error } = await supabase
-      .from('habits')
-      .insert({ name: habit.name, user_id: user?.id })
-      .select();
-    if (error) console.error('Error adding habit:', error);
-    else return data[0];
-  };
-
   const addHabit = async (habit: any) => {
     if (isOnline && user) {
-      const newHabit = await addHabitToSupabase(habit);
+      const newHabit = await addHabitToDb(user, habit);
       setHabits([...habits, newHabit]?.filter(Boolean));
       await storeHabits([...habits, newHabit]?.filter(Boolean));
     } else {
@@ -121,21 +116,12 @@ function MainApp() {
     }
   };
 
-  const updateHabitCompletionInSupabase = async (date: any, habitId: any, completed: any) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from('habit_data')
-      .upsert({
-        user_id: user?.id,
-        habit_id: habitId,
-        date: date,
-        completed
-      });
-    if (error) console.error('Error updating habit completion:', error);
-  };
-
-  const updateHabitCompletion = async (date: any, habitId: any, completed: any) => {
-    const dateString = date.toISOString().split('T')[0];
+  const updateHabitCompletion = async (
+    date: any,
+    habitId: any,
+    completed: any
+  ) => {
+    const dateString = formatDate(date);
     setHabitData((prevData: any) => ({
       ...prevData,
       [dateString]: {
@@ -152,9 +138,14 @@ function MainApp() {
     });
 
     if (isOnline && user) {
-      await updateHabitCompletionInSupabase(dateString, habitId, completed);
+      await updateHabitCompletionInDb(user, dateString, habitId, completed);
     } else {
-      await addOfflineAction({ type: 'updateHabitCompletion', date: dateString, habitId, completed });
+      await addOfflineAction({
+        type: 'updateHabitCompletion',
+        date: dateString,
+        habitId,
+        completed,
+      });
     }
   };
 
@@ -164,7 +155,11 @@ function MainApp() {
   };
 
   if (loading) {
-    return <View style={styles.container}><Text>Loading...</Text></View>;
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   if (!user) {
@@ -173,8 +168,12 @@ function MainApp() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      {!isOnline && <Text style={styles.offlineNotice}>You are offline. Changes will sync when you're back online.</Text>}
+      <StatusBar style='auto' />
+      {!isOnline && (
+        <Text style={styles.offlineNotice}>
+          You are offline. Changes will sync when you're back online.
+        </Text>
+      )}
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.content}>
           <Calendar
@@ -190,7 +189,7 @@ function MainApp() {
             habitData={habitData}
             updateHabitCompletion={updateHabitCompletion}
           />
-          <MonthlyAnalytics habits={habits} habitData={habitData} />
+          {/* <MonthlyAnalytics habits={habits} habitData={habitData} /> */}
         </View>
       </ScrollView>
       <DayDetailsModal
@@ -203,7 +202,6 @@ function MainApp() {
     </SafeAreaView>
   );
 }
-
 
 export default function App() {
   return (
