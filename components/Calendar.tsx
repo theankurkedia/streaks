@@ -1,135 +1,123 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  Animated,
+  StyleSheet,
+  ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { formatDate } from '../utils/date';
 
-const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+interface Props {
+  habit: {
+    id: string;
+    name: string;
+    icon?: string;
+  };
+  habitData: Record<string, Record<string, boolean>>;
+  onToggleDate: (date: Date) => void;
+}
 
-export default function Calendar({
-  selectedDate,
-  onSelectDate,
-  habitData,
-  onLongPress,
-}: any) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+export function Calendar({ habit, habitData, onToggleDate }: Props) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const BOX_SIZE = 10;
+  const MARGIN = 2;
+  const GRID_SIZE = BOX_SIZE + MARGIN * 2;
+  const TOTAL_DAYS = 364; // 52 weeks * 7 days
+  const WEEKS = 52;
 
-  const getDaysInMonth = (date: any) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    return { daysInMonth, firstDayOfMonth };
+  const calendarData = useMemo(() => {
+    if (!habit) return [];
+
+    const today = new Date();
+    return Array.from({ length: TOTAL_DAYS + 1 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (TOTAL_DAYS - index));
+      const dateString = formatDate(date);
+      return {
+        date,
+        completed: habitData[dateString]?.[habit?.id] || false,
+      };
+    });
+  }, [habit?.id, habitData]);
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: false });
+  }, []);
+
+  if (!habit) return null;
+
+  const getContributionColor = (completed: boolean) => {
+    return completed ? '#39D353' : '#161B22';
   };
 
-  const { daysInMonth, firstDayOfMonth } = getDaysInMonth(currentMonth);
-
-  const handlePrevMonth = () => {
-    setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-    );
+  const getContributionCount = () => {
+    return calendarData.filter(day => day.completed).length;
   };
 
-  const handleNextMonth = () => {
-    setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-    );
-  };
-
-  const getProgressForDate = (date: any) => {
-    const dateString = formatDate(date);
-    const dayData = habitData[dateString];
-    if (!dayData) return 0;
-
-    const completedHabits = Object.values(dayData).filter(Boolean).length;
-    const totalHabits = Object.keys(dayData).length;
-    return totalHabits > 0 ? (completedHabits / totalHabits) * 100 : 0;
-  };
-
-  const getProgressColor = (progress: any) => {
-    if (progress < 33) return '#FF6B6B';
-    if (progress < 66) return '#FFD93D';
-    return '#6BCB77';
+  const renderGrid = () => {
+    return calendarData.map((day, index) => (
+      <TouchableOpacity
+        key={index}
+        style={[
+          styles.contributionBox,
+          {
+            backgroundColor: getContributionColor(day.completed),
+            position: 'absolute',
+            top: (index % 7) * GRID_SIZE,
+            left: Math.floor(index / 7) * GRID_SIZE,
+          },
+        ]}
+        onPress={() => onToggleDate(day.date)}
+      />
+    ));
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handlePrevMonth}>
-          <Ionicons name='chevron-back' size={24} color='black' />
-        </TouchableOpacity>
-        <Text style={styles.monthYear}>
-          {currentMonth.toLocaleString('default', {
-            month: 'long',
-            year: 'numeric',
-          })}
-        </Text>
-        <TouchableOpacity onPress={handleNextMonth}>
-          <Ionicons name='chevron-forward' size={24} color='black' />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.weekDays}>
-        {daysOfWeek.map((day) => (
-          <Text key={day} style={styles.weekDay}>
-            {day}
+        <View>
+          <Text style={styles.habitName}>{habit.name}</Text>
+          <Text style={styles.contributionCount}>
+            {getContributionCount()} contributions in the last year
           </Text>
-        ))}
+        </View>
+        <TouchableOpacity
+          style={styles.todayButton}
+          onPress={() => onToggleDate(new Date())}
+        >
+          <Text style={styles.todayButtonText}>Mark Today</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.days}>
-        {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-          <View key={`empty-${index}`} style={styles.emptyDay} />
-        ))}
-        {Array.from({ length: daysInMonth }).map((_, index) => {
-          const day = index + 1;
-          const date = new Date(
-            currentMonth.getFullYear(),
-            currentMonth.getMonth(),
-            day
-          );
-          const isSelected =
-            selectedDate.toDateString() === date.toDateString();
-          const progress = getProgressForDate(date);
-          const progressColor = getProgressColor(progress);
 
-          return (
-            <TouchableOpacity
-              key={day}
-              style={[styles.day, isSelected && styles.selectedDay]}
-              onPress={() => onSelectDate(date)}
-              onLongPress={() => onLongPress(date)}
-            >
-              <Text
-                style={[styles.dayText, isSelected && styles.selectedDayText]}
-              >
-                {day}
-              </Text>
-              <Animated.View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: `${progress}%`,
-                    backgroundColor: progressColor,
-                  },
-                ]}
-              />
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View
+          style={[
+            styles.contributionGrid,
+            {
+              width: WEEKS * GRID_SIZE,
+              height: 7 * GRID_SIZE,
+            },
+          ]}
+        >
+          {renderGrid()}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: '#0D1117',
     borderRadius: 8,
     padding: 16,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
@@ -137,49 +125,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  monthYear: {
+  habitName: {
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  weekDays: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 8,
-  },
-  weekDay: {
-    color: '#666',
+  contributionCount: {
+    color: '#8B949E',
     fontSize: 12,
+    marginTop: 4,
   },
-  days: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  todayButton: {
+    backgroundColor: '#238636',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  day: {
-    width: '14.28%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
+  todayButtonText: {
+    color: '#fff',
   },
-  emptyDay: {
-    width: '14.28%',
-    aspectRatio: 1,
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
-  dayText: {
-    fontSize: 14,
+  contributionGrid: {
+    position: 'relative',
   },
-  selectedDay: {
-    backgroundColor: '#e6f3ff',
-  },
-  selectedDayText: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  progressBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    height: 3,
+  contributionBox: {
+    width: 10,
+    height: 10,
+    margin: 2,
+    borderRadius: 2,
   },
 });

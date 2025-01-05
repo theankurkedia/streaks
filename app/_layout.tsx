@@ -3,7 +3,7 @@ import { StyleSheet, View, ScrollView, SafeAreaView, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import NetInfo from '@react-native-community/netinfo';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import Calendar from '../components/Calendar';
+import { Calendar } from '../components/Calendar';
 import HabitForm from '../components/HabitForm';
 import DailyProgress from '../components/DailyProgress';
 // import MonthlyAnalytics from '../components/MonthlyAnalytics';
@@ -25,6 +25,8 @@ import {
   getHabitsFromDb,
   updateHabitCompletionInDb,
 } from '../services/habits';
+import { AppBar } from '../components/AppBar';
+import { AddHabitDialog } from '../components/AddHabitDialog';
 
 function MainApp() {
   const { user, loading } = useAuth();
@@ -34,9 +36,10 @@ function MainApp() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalDate, setModalDate] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [isAddHabitDialogVisible, setIsAddHabitDialogVisible] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
+    const unsubscribe = NetInfo.addEventListener(state => {
       setIsOnline(state.isConnected ?? false);
       if (state.isConnected) {
         syncOfflineActions();
@@ -168,7 +171,8 @@ function MainApp() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style='auto' />
+      <StatusBar style="auto" />
+      <AppBar onAddHabit={() => setIsAddHabitDialogVisible(true)} />
       {!isOnline && (
         <Text style={styles.offlineNotice}>
           You are offline. Changes will sync when you're back online.
@@ -176,12 +180,16 @@ function MainApp() {
       )}
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.content}>
-          <Calendar
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            habitData={habitData}
-            onLongPress={handleLongPress}
-          />
+          {habits?.map((habit: any) => (
+            <Calendar
+              key={habit?.id}
+              habit={habit}
+              habitData={habitData}
+              onToggleDate={() => {
+                //
+              }}
+            />
+          ))}
           <HabitForm onAddHabit={addHabit} />
           <DailyProgress
             habits={habits}
@@ -192,6 +200,11 @@ function MainApp() {
           {/* <MonthlyAnalytics habits={habits} habitData={habitData} /> */}
         </View>
       </ScrollView>
+      <AddHabitDialog
+        visible={isAddHabitDialogVisible}
+        onClose={() => setIsAddHabitDialogVisible(false)}
+        onAddHabit={addHabit}
+      />
       <DayDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
