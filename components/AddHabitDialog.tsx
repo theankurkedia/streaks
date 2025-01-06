@@ -17,6 +17,8 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
+import { Habit } from '../types';
+import { useHabitsStore } from '../store';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAX_TRANSLATE_Y = -SCREEN_HEIGHT + 50;
@@ -24,21 +26,12 @@ const MAX_TRANSLATE_Y = -SCREEN_HEIGHT + 50;
 interface AddHabitDialogProps {
   visible: boolean;
   onClose: () => void;
-  onAddHabit: (habit: Habit) => void;
 }
 
-interface Habit {
-  id: string;
-  name: string;
-  icon: string;
-}
-
-export function AddHabitDialog({
-  visible,
-  onClose,
-  onAddHabit,
-}: AddHabitDialogProps) {
+export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
   const [habit, setHabit] = useState<Habit>();
+
+  const { addHabit } = useHabitsStore();
   const translateY = useSharedValue(0);
   const context = useSharedValue({ y: 0 });
 
@@ -89,7 +82,7 @@ export function AddHabitDialog({
 
   const handleAddHabit = () => {
     if (habit) {
-      onAddHabit(habit);
+      addHabit(habit);
       setHabit(undefined);
       onClose();
     }
