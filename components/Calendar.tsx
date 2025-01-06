@@ -7,18 +7,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { formatDate } from '../utils/date';
+import { useHabitsStore } from '../store';
+import { Habit } from '../types';
 
 interface Props {
-  habit: {
-    id: string;
-    name: string;
-    icon?: string;
-  };
-  habitData: Record<string, Record<string, boolean>>;
-  onToggleDate: (date: Date) => void;
+  habit: Habit;
 }
 
-export function Calendar({ habit, habitData, onToggleDate }: Props) {
+export function Calendar({ habit }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const BOX_SIZE = 10;
   const MARGIN = 2;
@@ -26,20 +22,23 @@ export function Calendar({ habit, habitData, onToggleDate }: Props) {
   const TOTAL_DAYS = 364; // 52 weeks * 7 days
   const WEEKS = 52;
 
+  const { getHabitCompletions, toggleHabitCompletion } = useHabitsStore();
+
   const calendarData = useMemo(() => {
     if (!habit) return [];
 
+    const habitData = getHabitCompletions(habit?.id);
     const today = new Date();
     return Array.from({ length: TOTAL_DAYS + 1 }, (_, index) => {
       const date = new Date(today);
       date.setDate(today.getDate() - (TOTAL_DAYS - index));
       const dateString = formatDate(date);
       return {
-        date,
-        completed: habitData[dateString]?.[habit?.id] || false,
+        date: dateString,
+        completed: habitData?.[dateString] || false,
       };
     });
-  }, [habit?.id, habitData]);
+  }, [habit?.id]);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: false });
@@ -68,7 +67,7 @@ export function Calendar({ habit, habitData, onToggleDate }: Props) {
             left: Math.floor(index / 7) * GRID_SIZE,
           },
         ]}
-        onPress={() => onToggleDate(day.date)}
+        // onPress={() => toggleHabitCompletion(day.date, habit.id)}
       />
     ));
   };
@@ -84,7 +83,9 @@ export function Calendar({ habit, habitData, onToggleDate }: Props) {
         </View>
         <TouchableOpacity
           style={styles.todayButton}
-          onPress={() => onToggleDate(new Date())}
+          onPress={() =>
+            toggleHabitCompletion(formatDate(new Date()), habit.id)
+          }
         >
           <Text style={styles.todayButtonText}>Mark Today</Text>
         </TouchableOpacity>

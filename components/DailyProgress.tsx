@@ -11,11 +11,10 @@ import { formatDate } from '../utils/date';
 
 export default function DailyProgress({
   habits,
-  selectedDate,
   habitData,
   updateHabitCompletion,
 }: any) {
-  const dateString = formatDate(selectedDate);
+  const dateString = formatDate(new Date());
   const dayData = habitData[dateString] || {};
 
   const animatedValues = useRef(
@@ -33,7 +32,7 @@ export default function DailyProgress({
 
   const handleToggle = (habitId: any) => {
     const newValue = !dayData[habitId];
-    updateHabitCompletion(selectedDate, habitId, newValue);
+    updateHabitCompletion(new Date(), habitId, newValue);
   };
 
   return (
