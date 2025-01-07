@@ -12,6 +12,7 @@ interface HabitsStore {
   isInitialising: boolean;
   initialiseData: () => Promise<void>;
   addHabit: (habit: Habit) => Promise<void>;
+  editHabit: (habit: Habit) => Promise<void>;
   removeHabit: (habitId: string) => Promise<void>;
   completions: Completion;
   getHabitCompletions: (habitId: string) => {
@@ -36,6 +37,12 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     habits.push({ ...habit, id: Math.random().toString(36).substring(2, 10) });
     set({ habits });
     await saveHabitsData(habits);
+  },
+  editHabit: async (habit: Habit) => {
+    const habits = get().habits;
+    const updatedHabits = habits.map(h => (h.id === habit.id ? habit : h));
+    set({ habits: updatedHabits });
+    await saveHabitsData(updatedHabits);
   },
   removeHabit: async (habitId: string) => {
     const habits = get().habits;

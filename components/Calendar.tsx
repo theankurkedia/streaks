@@ -14,6 +14,7 @@ import Icon from './Icon';
 
 interface Props {
   habit: Habit;
+  onClick: () => void;
 }
 const BOX_SIZE = 10;
 const MARGIN = 2;
@@ -22,7 +23,7 @@ const TOTAL_DAYS = 364; // 52 weeks * 7 days
 const WEEKS = 52;
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function Calendar({ habit }: Props) {
+export function Calendar({ habit, onClick }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const { getHabitCompletions, toggleHabitCompletion } = useHabitsStore();
@@ -114,7 +115,7 @@ export function Calendar({ habit }: Props) {
   };
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <TouchableOpacity style={styles.header} onPress={onClick}>
         <View>
           <View style={styles.habitNameContainer}>
             {habit.icon && <Icon name={habit.icon} color="#fff" size={20} />}
@@ -126,13 +127,14 @@ export function Calendar({ habit }: Props) {
         </View>
         <TouchableOpacity
           style={styles.todayButton}
-          onPress={() =>
-            toggleHabitCompletion(formatDate(new Date()), habit.id)
-          }
+          onPress={e => {
+            e.stopPropagation();
+            toggleHabitCompletion(formatDate(new Date()), habit.id);
+          }}
         >
           <Check color="#fff" size={20} />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.calendarContainer}>
         <View style={styles.weekdayLabels}>

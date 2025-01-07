@@ -26,23 +26,24 @@ const COLUMNS = 8; // We want 4 icons per row
 const AVAILABLE_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
 const ICON_SIZE = (AVAILABLE_WIDTH - ICON_MARGIN * 2 * COLUMNS) / COLUMNS;
 
-interface AddHabitDialogProps {
+interface Props {
   visible: boolean;
   onClose: () => void;
+  habit?: Habit;
 }
 
-export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
-  const [habit, setHabit] = useState<Habit>();
+export function AddEditDialog(props: Props) {
+  const [editHabit, setEditHabit] = useState<Habit | undefined>(props.habit);
   const [iconSearch, setIconSearch] = useState('');
-  const { addHabit } = useHabitsStore();
+  const { addHabit, editHabit: editHabitStore } = useHabitsStore();
   const translateY = useSharedValue(SCREEN_HEIGHT);
 
   useEffect(() => {
-    translateY.value = withSpring(visible ? 0 : SCREEN_HEIGHT, {
+    translateY.value = withSpring(props.visible ? 0 : SCREEN_HEIGHT, {
       damping: 50,
       stiffness: 100,
     });
-  }, [visible]);
+  }, [props.visible]);
 
   const rBottomSheetStyle = useAnimatedStyle(() => {
     return {
@@ -51,11 +52,15 @@ export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
   });
 
   const handleAddHabit = () => {
-    if (habit) {
-      addHabit(habit);
-      setHabit(undefined);
-      onClose();
+    if (!editHabit?.name) return;
+
+    if (props.habit) {
+      editHabitStore(editHabit);
+    } else {
+      addHabit(editHabit);
     }
+    setEditHabit(undefined);
+    props.onClose();
   };
 
   return (
@@ -66,9 +71,9 @@ export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
         style={styles.input}
         placeholder="Habit Name"
         placeholderTextColor="#6B7280"
-        value={habit?.name}
+        value={editHabit?.name}
         onChangeText={text =>
-          setHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
+          setEditHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
         }
       />
       <Text style={styles.subtitle}>Select an Icon</Text>
@@ -91,14 +96,16 @@ export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
                 key={name}
                 style={[
                   styles.iconButton,
-                  habit?.icon === name && styles.selectedIconButton,
+                  editHabit?.icon === name && styles.selectedIconButton,
                 ]}
                 onPress={() =>
-                  setHabit(prev => ({ ...(prev ?? {}), icon: name }) as Habit)
+                  setEditHabit(
+                    prev => ({ ...(prev ?? {}), icon: name }) as Habit
+                  )
                 }
               >
                 <Icon
-                  color={habit?.icon === name ? '#fff' : '#6B7280'}
+                  color={editHabit?.icon === name ? '#fff' : '#6B7280'}
                   size={24}
                 />
               </TouchableOpacity>
@@ -106,7 +113,7 @@ export function AddHabitDialog({ visible, onClose }: AddHabitDialogProps) {
         </View>
       </ScrollView>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={onClose}>
+        <TouchableOpacity style={styles.button} onPress={props.onClose}>
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
