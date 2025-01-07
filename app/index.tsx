@@ -2,74 +2,82 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Calendar } from '../components/Calendar';
-import HabitForm from '../components/HabitForm';
-// import MonthlyAnalytics from '../components/MonthlyAnalytics';
-import { AddHabitDialog } from '../components/AddHabitDialog';
+import { AddEditDialog } from '../components/AddEditDialog';
 import { AppBar } from '../components/AppBar';
 import { useHabitsStore } from '../store';
+import { CalendarSkeleton } from '../components/CalendarSkeleton';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Habit } from '../types';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalDate, setModalDate] = useState(null);
+  const [editHabit, setEditHabit] = useState<Habit>();
   const [isAddHabitDialogVisible, setIsAddHabitDialogVisible] = useState(false);
 
-  const { habits, addHabit, initialiseHabits, initialiseCompletions } =
-    useHabitsStore();
+  const { habits, initialiseData, isInitialising } = useHabitsStore();
 
   useEffect(() => {
-    initialiseHabits();
-    initialiseCompletions();
+    initialiseData();
   }, []);
 
-  const handleLongPress = (date: any) => {
-    setModalDate(date);
-    setModalVisible(true);
+  const openAddEditDialog = (habit?: Habit) => {
+    if (habit) {
+      setEditHabit(habit);
+    }
+    setIsAddHabitDialogVisible(true);
+  };
+
+  const onDialogClose = () => {
+    setIsAddHabitDialogVisible(false);
+    setEditHabit(undefined);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      <AppBar onAddHabit={() => setIsAddHabitDialogVisible(true)} />
-
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <View style={styles.content}>
-          {habits?.map((habit: any) => (
-            <Calendar key={habit?.id} habit={habit} />
-          ))}
-          <HabitForm onAddHabit={addHabit} />
-          {/* <DailyProgress
-            habits={habits}
-            habitData={habitData}
-            updateHabitCompletion={updateHabitCompletion}
-          /> */}
-          {/* <MonthlyAnalytics habits={habits} habitData={habitData} /> */}
-        </View>
-      </ScrollView>
-      <AddHabitDialog
-        visible={isAddHabitDialogVisible}
-        onClose={() => setIsAddHabitDialogVisible(false)}
-      />
-      {/* <DayDetailsModal
+    <GestureHandlerRootView>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        {isInitialising ? <CalendarSkeleton /> : null}
+        <AppBar onAddHabit={openAddEditDialog} />
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <View style={styles.content}>
+            {habits?.map((habit: any) => (
+              <Calendar
+                key={habit?.id}
+                habit={habit}
+                onClick={() => openAddEditDialog(habit)}
+              />
+            ))}
+          </View>
+        </ScrollView>
+        <AddEditDialog
+          habit={editHabit}
+          visible={isAddHabitDialogVisible}
+          onClose={onDialogClose}
+        />
+        {/* <DayDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         date={modalDate}
         habits={habits}
         habitData={habitData}
       /> */}
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#0d1b2a',
   },
   scrollView: {
     flexGrow: 1,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 8,
     gap: 16,
   },
   offlineNotice: {

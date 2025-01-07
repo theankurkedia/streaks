@@ -22,8 +22,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1F2937',
-    paddingVertical: 16,
+    backgroundColor: '#0d1b2a',
+    paddingVertical: 8,
     paddingHorizontal: 20,
   },
   title: {

@@ -9,18 +9,22 @@ import {
 import { formatDate } from '../utils/date';
 import { useHabitsStore } from '../store';
 import { Habit } from '../types';
+import { Check, icons, LucideIcon } from 'lucide-react-native';
+import Icon from './Icon';
 
 interface Props {
   habit: Habit;
+  onClick: () => void;
 }
+const BOX_SIZE = 10;
+const MARGIN = 2;
+const GRID_SIZE = BOX_SIZE + MARGIN * 2;
+const TOTAL_DAYS = 364; // 52 weeks * 7 days
+const WEEKS = 52;
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function Calendar({ habit }: Props) {
+export function Calendar({ habit, onClick }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
-  const BOX_SIZE = 10;
-  const MARGIN = 2;
-  const GRID_SIZE = BOX_SIZE + MARGIN * 2;
-  const TOTAL_DAYS = 364; // 52 weeks * 7 days
-  const WEEKS = 52;
 
   const { getHabitCompletions, toggleHabitCompletion } = useHabitsStore();
 
@@ -29,16 +33,16 @@ export function Calendar({ habit }: Props) {
 
     const habitData = getHabitCompletions(habit?.id);
     const today = new Date();
-    return Array.from({ length: TOTAL_DAYS + 1 }, (_, index) => {
+    return Array.from({ length: TOTAL_DAYS }, (_, index) => {
       const date = new Date(today);
-      date.setDate(today.getDate() - (TOTAL_DAYS - index));
+      date.setDate(today.getDate() - (TOTAL_DAYS - 1 - index));
       const dateString = formatDate(date);
       return {
         date: dateString,
         completed: habitData?.[dateString] || false,
       };
     });
-  }, [habit?.id]);
+  }, [habit?.id, getHabitCompletions]);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: false });
@@ -55,60 +59,116 @@ export function Calendar({ habit }: Props) {
   };
 
   const renderGrid = () => {
-    return calendarData.map((day, index) => (
-      <TouchableOpacity
-        key={index}
-        style={[
-          styles.contributionBox,
-          {
-            backgroundColor: getContributionColor(day.completed),
-            position: 'absolute',
-            top: (index % 7) * GRID_SIZE,
-            left: Math.floor(index / 7) * GRID_SIZE,
-          },
-        ]}
-        // onPress={() => toggleHabitCompletion(day.date, habit.id)}
-      />
-    ));
+    const today = formatDate(new Date());
+
+    return calendarData.map((day, index) => {
+      const date = new Date(day.date);
+      const dayOfWeek = date.getDay(); // 0-6, where 0 is Sunday
+      const weekNumber = Math.floor(index / 7);
+
+      return (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.contributionBox,
+            {
+              backgroundColor: getContributionColor(day.completed),
+              position: 'absolute',
+              top: dayOfWeek * GRID_SIZE,
+              left: weekNumber * GRID_SIZE,
+              borderWidth: day.date === today ? 1 : 0,
+              borderColor: '#ffffff',
+            },
+          ]}
+        />
+      );
+    });
   };
 
+  const renderMonthLabels = () => {
+    const months: { [key: string]: number } = {};
+
+    calendarData.forEach((day, index) => {
+      const date = new Date(day.date);
+      const monthKey = date.toLocaleString('default', { month: 'short' });
+      const weekNumber = Math.floor(index / 7);
+
+      // Only store the first week number for each month
+      if (!months.hasOwnProperty(monthKey)) {
+        months[monthKey] = weekNumber;
+      }
+    });
+
+    return Object.entries(months).map(([month, weekNumber]) => (
+      <Text
+        key={month}
+        style={[
+          styles.monthLabel,
+          {
+            left: weekNumber * GRID_SIZE,
+          },
+        ]}
+      >
+        {month}
+      </Text>
+    ));
+  };
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <TouchableOpacity style={styles.header} onPress={onClick}>
         <View>
-          <Text style={styles.habitName}>{habit.name}</Text>
+          <View style={styles.habitNameContainer}>
+            {habit.icon && <Icon name={habit.icon} color="#fff" size={20} />}
+            <Text style={styles.habitName}>{habit.name}</Text>
+          </View>
           <Text style={styles.contributionCount}>
             {getContributionCount()} contributions in the last year
           </Text>
         </View>
         <TouchableOpacity
           style={styles.todayButton}
-          onPress={() =>
-            toggleHabitCompletion(formatDate(new Date()), habit.id)
-          }
+          onPress={e => {
+            e.stopPropagation();
+            toggleHabitCompletion(formatDate(new Date()), habit.id);
+          }}
         >
-          <Text style={styles.todayButtonText}>Mark Today</Text>
+          <Check color="#fff" size={20} />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        ref={scrollViewRef}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        <View
-          style={[
-            styles.contributionGrid,
-            {
-              width: WEEKS * GRID_SIZE,
-              height: 7 * GRID_SIZE,
-            },
-          ]}
-        >
-          {renderGrid()}
+      <View style={styles.calendarContainer}>
+        <View style={styles.weekdayLabels}>
+          {WEEKDAYS.map(day => (
+            <Text key={day} style={styles.weekdayLabel}>
+              {day}
+            </Text>
+          ))}
         </View>
-      </ScrollView>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollViewContent}
+        >
+          <View style={styles.contributionWrapper}>
+            <View style={styles.monthLabelsContainer}>
+              {renderMonthLabels()}
+            </View>
+            <View
+              style={[
+                styles.contributionGrid,
+                {
+                  width: WEEKS * GRID_SIZE,
+                  height: 7 * GRID_SIZE,
+                },
+              ]}
+            >
+              {renderGrid()}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -138,12 +198,8 @@ const styles = StyleSheet.create({
   },
   todayButton: {
     backgroundColor: '#238636',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    padding: 8,
     borderRadius: 6,
-  },
-  todayButtonText: {
-    color: '#fff',
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -157,5 +213,46 @@ const styles = StyleSheet.create({
     height: 10,
     margin: 2,
     borderRadius: 2,
+  },
+  calendarContainer: {
+    flexDirection: 'row',
+  },
+  weekdayLabels: {
+    marginRight: 4,
+    gap: 2,
+    marginTop: 19,
+  },
+  weekdayLabel: {
+    color: '#8B949E',
+    fontSize: 12,
+    lineHeight: 12,
+    textAlign: 'right',
+    width: 32,
+    height: 12,
+  },
+  contributionWrapper: {
+    paddingTop: 20, // Make room for month labels
+  },
+  monthLabelsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 16,
+  },
+  monthLabel: {
+    position: 'absolute',
+    color: '#8B949E',
+    fontSize: 12,
+    top: 0,
+  },
+  habitNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
+  habitIcon: {
+    marginRight: 8,
   },
 });
