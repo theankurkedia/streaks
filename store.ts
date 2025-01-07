@@ -9,11 +9,11 @@ import {
 
 interface HabitsStore {
   habits: Habit[];
-  initialiseHabits: () => Promise<void>;
+  isInitialising: boolean;
+  initialiseData: () => Promise<void>;
   addHabit: (habit: Habit) => Promise<void>;
   removeHabit: (habitId: string) => Promise<void>;
   completions: Completion;
-  initialiseCompletions: () => Promise<void>;
   getHabitCompletions: (habitId: string) => {
     [date: string]: boolean;
   };
@@ -22,9 +22,14 @@ interface HabitsStore {
 
 export const useHabitsStore = create<HabitsStore>((set, get) => ({
   habits: [],
-  initialiseHabits: async () => {
+  isInitialising: false,
+  initialiseData: async () => {
+    set({ isInitialising: true });
     const habits = await getHabitsData();
+    const completions = await getHabitCompletionsFromDb();
     set({ habits });
+    set({ completions });
+    set({ isInitialising: false });
   },
   addHabit: async (habit: Habit) => {
     const habits = get().habits;
@@ -40,10 +45,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
   },
   setHabits: (habits: Habit[]) => set({ habits }),
   completions: {},
-  initialiseCompletions: async () => {
-    const completions = await getHabitCompletionsFromDb();
-    set({ completions });
-  },
   getHabitCompletions: (habitId: string) => {
     const completions = get().completions;
     return completions[habitId];

@@ -5,43 +5,45 @@ import { Calendar } from '../components/Calendar';
 import { AddHabitDialog } from '../components/AddHabitDialog';
 import { AppBar } from '../components/AppBar';
 import { useHabitsStore } from '../store';
+import { CalendarSkeleton } from '../components/CalendarSkeleton';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [isAddHabitDialogVisible, setIsAddHabitDialogVisible] = useState(false);
 
-  const { habits, initialiseHabits, initialiseCompletions } =
-    useHabitsStore();
+  const { habits, initialiseData, isInitialising } = useHabitsStore();
 
   useEffect(() => {
-    initialiseHabits();
-    initialiseCompletions();
+    initialiseData();
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      <AppBar onAddHabit={() => setIsAddHabitDialogVisible(true)} />
-
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <View style={styles.content}>
-          {habits?.map((habit: any) => (
-            <Calendar key={habit?.id} habit={habit} />
-          ))}
-        </View>
-      </ScrollView>
-      <AddHabitDialog
-        visible={isAddHabitDialogVisible}
-        onClose={() => setIsAddHabitDialogVisible(false)}
-      />
-      {/* <DayDetailsModal
+    <GestureHandlerRootView>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        {isInitialising ? <CalendarSkeleton /> : null}
+        <AppBar onAddHabit={() => setIsAddHabitDialogVisible(true)} />
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <View style={styles.content}>
+            {habits?.map((habit: any) => (
+              <Calendar key={habit?.id} habit={habit} />
+            ))}
+          </View>
+        </ScrollView>
+        <AddHabitDialog
+          visible={isAddHabitDialogVisible}
+          onClose={() => setIsAddHabitDialogVisible(false)}
+        />
+        {/* <DayDetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         date={modalDate}
         habits={habits}
         habitData={habitData}
       /> */}
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 

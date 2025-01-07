@@ -9,7 +9,8 @@ import {
 import { formatDate } from '../utils/date';
 import { useHabitsStore } from '../store';
 import { Habit } from '../types';
-import { Check } from "lucide-react-native"
+import { Check, icons, LucideIcon } from 'lucide-react-native';
+import Icon from './Icon';
 
 interface Props {
   habit: Habit;
@@ -78,7 +79,6 @@ export function Calendar({ habit }: Props) {
               borderColor: '#ffffff',
             },
           ]}
-          // onPress={() => toggleHabitCompletion(day.date, habit.id)}
         />
       );
     });
@@ -112,12 +112,14 @@ export function Calendar({ habit }: Props) {
       </Text>
     ));
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.habitName}>{habit.name}</Text>
+          <View style={styles.habitNameContainer}>
+            {habit.icon && <Icon name={habit.icon} color="#fff" size={20} />}
+            <Text style={styles.habitName}>{habit.name}</Text>
+          </View>
           <Text style={styles.contributionCount}>
             {getContributionCount()} contributions in the last year
           </Text>
@@ -134,7 +136,7 @@ export function Calendar({ habit }: Props) {
 
       <View style={styles.calendarContainer}>
         <View style={styles.weekdayLabels}>
-          {WEEKDAYS.map((day) => (
+          {WEEKDAYS.map(day => (
             <Text key={day} style={styles.weekdayLabel}>
               {day}
             </Text>
@@ -221,6 +223,7 @@ const styles = StyleSheet.create({
   weekdayLabel: {
     color: '#8B949E',
     fontSize: 12,
+    lineHeight: 12,
     textAlign: 'right',
     width: 32,
     height: 12,
@@ -240,5 +243,14 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontSize: 12,
     top: 0,
+  },
+  habitNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
+  habitIcon: {
+    marginRight: 8,
   },
 });
