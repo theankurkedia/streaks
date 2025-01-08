@@ -13,7 +13,7 @@ interface HabitsStore {
   initialiseData: () => Promise<void>;
   addHabit: (habit: Habit) => Promise<void>;
   editHabit: (habit: Habit) => Promise<void>;
-  removeHabit: (habitId: string) => Promise<void>;
+  deleteHabit: (habitId: string) => Promise<void>;
   completions: Completion;
   getHabitCompletions: (habitId: string) => {
     [date: string]: boolean;
@@ -45,9 +45,15 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     set({ habits: updatedHabits });
     await saveHabitsData(updatedHabits);
   },
-  removeHabit: async (habitId: string) => {
-    const habits = get().habits;
-    const updatedHabits = habits.filter(habit => habit.id !== habitId);
+  deleteHabit: async (habitId: string) => {
+    // Remove completions for the habit
+    const { [habitId]: deletedCompletions, ...remainingCompletions } =
+      get().completions;
+    set({ completions: remainingCompletions });
+    await saveCompletionsData(remainingCompletions);
+
+    // Remove the habit
+    const updatedHabits = get().habits.filter(habit => habit.id !== habitId);
     set({ habits: updatedHabits });
     await saveHabitsData(updatedHabits);
   },
