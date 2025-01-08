@@ -1,16 +1,17 @@
 # Streaks
+
 A habit tracking app
 
-
 ## Roadmap
+
 - [x] Add habit
 - [x] Mark habit as done
 - [x] Show year in the habits
-- [ ] Edit/delete habit
+- [x] Edit/delete habit
 - [ ] Add customizations
-    - [ ] description
-    - [ ] color
-    - [x] icon
+  - [ ] description
+  - [ ] color
+  - [x] icon
 - [ ] Add option to mark past date
 - [ ] Release
 - [ ] Add reminders
