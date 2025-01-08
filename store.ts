@@ -24,6 +24,7 @@ interface HabitsStore {
 export const useHabitsStore = create<HabitsStore>((set, get) => ({
   habits: [],
   isInitialising: false,
+  completions: {},
   initialiseData: async () => {
     set({ isInitialising: true });
     const habits = await getHabitsData();
@@ -51,7 +52,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     await saveHabitsData(updatedHabits);
   },
   setHabits: (habits: Habit[]) => set({ habits }),
-  completions: {},
   getHabitCompletions: (habitId: string) => {
     const completions = get().completions;
     return completions[habitId];
