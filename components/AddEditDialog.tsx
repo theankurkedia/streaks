@@ -7,8 +7,9 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
-import { icons, X } from 'lucide-react-native';
+import { icons, X, Trash } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Habit } from '../types';
 import { useHabitsStore } from '../store';
+import { DeleteDialog } from './DeleteDialog';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PADDING_HORIZONTAL = 20;
@@ -54,8 +56,9 @@ export function AddEditDialog(props: Props) {
     props.habit
   );
   const [iconSearch, setIconSearch] = useState('');
-  const { addHabit, editHabit: editHabitStore } = useHabitsStore();
+  const { addHabit, editHabit: editHabitStore, deleteHabit } = useHabitsStore();
   const translateY = useSharedValue(SCREEN_HEIGHT);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (props.habit) {
@@ -88,18 +91,83 @@ export function AddEditDialog(props: Props) {
     props.onClose();
   };
 
+  const handleDelete = useCallback(() => {
+    setShowDeleteDialog(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (props.habit?.id) {
+      deleteHabit(props.habit.id);
+      setShowDeleteDialog(false);
+      props.onClose();
+    }
+  }, [props.habit?.id, deleteHabit, props.onClose]);
+
   const visibleIcons = getVisibleIcons(iconSearch, props.habit?.icon);
 
   return (
-    <Animated.View style={[styles.bottomSheetContainer, rBottomSheetStyle]}>
-      <View style={styles.line} />
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={props.onClose}>
-          <X color="#fff" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {props.habit?.id ? 'Edit Habit' : 'Add New Habit'}
-        </Text>
+    <>
+      <Animated.View style={[styles.bottomSheetContainer, rBottomSheetStyle]}>
+        <View style={styles.line} />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={props.onClose}>
+            <X color="#fff" size={24} />
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            {props.habit?.id ? 'Edit Habit' : 'Add New Habit'}
+          </Text>
+          {props.habit?.id && (
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <Trash color="#fff" size={20} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Habit Name"
+          placeholderTextColor="#6B7280"
+          value={selectedHabit?.name}
+          onChangeText={text =>
+            setSelectedHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
+          }
+        />
+        <Text style={styles.subtitle}>Select an Icon</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Search icons..."
+          placeholderTextColor="#6B7280"
+          value={iconSearch}
+          onChangeText={setIconSearch}
+        />
+        <ScrollView
+          style={styles.iconGrid}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.iconContainer}>
+            {visibleIcons.map(([name, Icon]) => (
+              <TouchableOpacity
+                key={name}
+                style={[
+                  styles.iconButton,
+                  selectedHabit?.icon === name && styles.selectedIconButton,
+                ]}
+                onPress={() =>
+                  setSelectedHabit(
+                    prev => ({ ...(prev ?? {}), icon: name }) as Habit
+                  )
+                }
+              >
+                <Icon
+                  color={selectedHabit?.icon === name ? '#fff' : '#6B7280'}
+                  size={24}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
         <TouchableOpacity
           style={[
             styles.saveButton,
@@ -110,48 +178,13 @@ export function AddEditDialog(props: Props) {
         >
           <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
-      </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Habit Name"
-        placeholderTextColor="#6B7280"
-        value={selectedHabit?.name}
-        onChangeText={text =>
-          setSelectedHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
-        }
+      </Animated.View>
+      <DeleteDialog
+        visible={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
       />
-      <Text style={styles.subtitle}>Select an Icon</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Search icons..."
-        placeholderTextColor="#6B7280"
-        value={iconSearch}
-        onChangeText={setIconSearch}
-      />
-      <ScrollView style={styles.iconGrid}>
-        <View style={styles.iconContainer}>
-          {visibleIcons.map(([name, Icon]) => (
-            <TouchableOpacity
-              key={name}
-              style={[
-                styles.iconButton,
-                selectedHabit?.icon === name && styles.selectedIconButton,
-              ]}
-              onPress={() =>
-                setSelectedHabit(
-                  prev => ({ ...(prev ?? {}), icon: name }) as Habit
-                )
-              }
-            >
-              <Icon
-                color={selectedHabit?.icon === name ? '#fff' : '#6B7280'}
-                size={24}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-    </Animated.View>
+    </>
   );
 }
 
@@ -192,9 +225,17 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#3B82F6',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   saveButtonText: {
     color: '#fff',
@@ -216,8 +257,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   iconGrid: {
-    maxHeight: 200,
+    flex: 1,
     paddingHorizontal: PADDING_HORIZONTAL,
+    marginBottom: 80,
   },
   iconContainer: {
     flexDirection: 'row',
@@ -234,5 +276,12 @@ const styles = StyleSheet.create({
   },
   selectedIconButton: {
     backgroundColor: '#3B82F6',
+  },
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  deleteButton: {
+    padding: 4,
+    marginLeft: 'auto',
   },
 });
