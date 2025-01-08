@@ -8,7 +8,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { icons } from 'lucide-react-native';
+import { icons, X } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -32,11 +32,36 @@ interface Props {
   habit?: Habit;
 }
 
+const getVisibleIcons = (iconSearch: string, selectedIcon?: string) => {
+  const allIcons = Object.entries(icons);
+  const selectedIconEntry = selectedIcon
+    ? [allIcons.find(([name]) => name === selectedIcon)!]
+    : [];
+  return [
+    ...selectedIconEntry,
+    ...allIcons
+      .filter(
+        ([name]) =>
+          name !== selectedIcon &&
+          name.toLowerCase().includes(iconSearch?.toLowerCase() || '')
+      )
+      .slice(0, 31),
+  ];
+};
+
 export function AddEditDialog(props: Props) {
-  const [editHabit, setEditHabit] = useState<Habit | undefined>(props.habit);
+  const [selectedHabit, setSelectedHabit] = useState<Habit | undefined>(
+    props.habit
+  );
   const [iconSearch, setIconSearch] = useState('');
   const { addHabit, editHabit: editHabitStore } = useHabitsStore();
   const translateY = useSharedValue(SCREEN_HEIGHT);
+
+  useEffect(() => {
+    if (props.habit) {
+      setSelectedHabit(props.habit);
+    }
+  }, [props.habit]);
 
   useEffect(() => {
     translateY.value = withSpring(props.visible ? 0 : SCREEN_HEIGHT, {
@@ -52,28 +77,47 @@ export function AddEditDialog(props: Props) {
   });
 
   const handleAddHabit = () => {
-    if (!editHabit?.name) return;
+    if (!selectedHabit?.name) return;
 
     if (props.habit) {
-      editHabitStore(editHabit);
+      editHabitStore(selectedHabit);
     } else {
-      addHabit(editHabit);
+      addHabit(selectedHabit);
     }
-    setEditHabit(undefined);
+    setSelectedHabit(undefined);
     props.onClose();
   };
+
+  const visibleIcons = getVisibleIcons(iconSearch, props.habit?.icon);
 
   return (
     <Animated.View style={[styles.bottomSheetContainer, rBottomSheetStyle]}>
       <View style={styles.line} />
-      <Text style={styles.title}>Add New Habit</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.closeButton} onPress={props.onClose}>
+          <X color="#fff" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.title}>
+          {props.habit?.id ? 'Edit Habit' : 'Add New Habit'}
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            { opacity: selectedHabit?.name ? 1 : 0.5 },
+          ]}
+          onPress={handleAddHabit}
+          disabled={!selectedHabit?.name}
+        >
+          <Text style={styles.saveButtonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Habit Name"
         placeholderTextColor="#6B7280"
-        value={editHabit?.name}
+        value={selectedHabit?.name}
         onChangeText={text =>
-          setEditHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
+          setSelectedHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
         }
       />
       <Text style={styles.subtitle}>Select an Icon</Text>
@@ -86,43 +130,27 @@ export function AddEditDialog(props: Props) {
       />
       <ScrollView style={styles.iconGrid}>
         <View style={styles.iconContainer}>
-          {Object.entries(icons)
-            .filter(([name]) =>
-              name.toLowerCase().includes(iconSearch?.toLowerCase() || '')
-            )
-            .slice(0, 32)
-            .map(([name, Icon]) => (
-              <TouchableOpacity
-                key={name}
-                style={[
-                  styles.iconButton,
-                  editHabit?.icon === name && styles.selectedIconButton,
-                ]}
-                onPress={() =>
-                  setEditHabit(
-                    prev => ({ ...(prev ?? {}), icon: name }) as Habit
-                  )
-                }
-              >
-                <Icon
-                  color={editHabit?.icon === name ? '#fff' : '#6B7280'}
-                  size={24}
-                />
-              </TouchableOpacity>
-            ))}
+          {visibleIcons.map(([name, Icon]) => (
+            <TouchableOpacity
+              key={name}
+              style={[
+                styles.iconButton,
+                selectedHabit?.icon === name && styles.selectedIconButton,
+              ]}
+              onPress={() =>
+                setSelectedHabit(
+                  prev => ({ ...(prev ?? {}), icon: name }) as Habit
+                )
+              }
+            >
+              <Icon
+                color={selectedHabit?.icon === name ? '#fff' : '#6B7280'}
+                size={24}
+              />
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={props.onClose}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.addButton]}
-          onPress={handleAddHabit}
-        >
-          <Text style={styles.buttonText}>Add Habit</Text>
-        </TouchableOpacity>
-      </View>
     </Animated.View>
   );
 }
@@ -146,12 +174,31 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     borderRadius: 2,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  closeButton: {
+    padding: 4,
+  },
   title: {
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-    paddingHorizontal: 20,
+    flex: 1,
+    marginLeft: 12,
+  },
+  saveButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   subtitle: {
     color: '#fff',
@@ -187,25 +234,5 @@ const styles = StyleSheet.create({
   },
   selectedIconButton: {
     backgroundColor: '#3B82F6',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 'auto',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  button: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  addButton: {
-    backgroundColor: '#3B82F6',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
 });

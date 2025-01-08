@@ -9,7 +9,7 @@ import {
 import { formatDate } from '../utils/date';
 import { useHabitsStore } from '../store';
 import { Habit } from '../types';
-import { Check, icons, LucideIcon } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import Icon from './Icon';
 
 interface Props {
@@ -28,6 +28,8 @@ export function Calendar({ habit, onClick }: Props) {
 
   const { getHabitCompletions, toggleHabitCompletion } = useHabitsStore();
 
+  const habitCompletions = getHabitCompletions(habit.id);
+
   const calendarData = useMemo(() => {
     if (!habit) return [];
 
@@ -42,7 +44,7 @@ export function Calendar({ habit, onClick }: Props) {
         completed: habitData?.[dateString] || false,
       };
     });
-  }, [habit?.id, getHabitCompletions]);
+  }, [habit?.id, JSON.stringify(habitCompletions)]); // Use JSON.stringify in the dependency array instead
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: false });

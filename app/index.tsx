@@ -10,8 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Habit } from '../types';
 
 export default function App() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editHabit, setEditHabit] = useState<Habit>();
+  const [selectedHabit, setSelectedHabit] = useState<Habit>();
   const [isAddHabitDialogVisible, setIsAddHabitDialogVisible] = useState(false);
 
   const { habits, initialiseData, isInitialising } = useHabitsStore();
@@ -22,14 +21,14 @@ export default function App() {
 
   const openAddEditDialog = (habit?: Habit) => {
     if (habit) {
-      setEditHabit(habit);
+      setSelectedHabit(habit);
     }
     setIsAddHabitDialogVisible(true);
   };
 
   const onDialogClose = () => {
     setIsAddHabitDialogVisible(false);
-    setEditHabit(undefined);
+    setSelectedHabit(undefined);
   };
 
   return (
@@ -50,17 +49,10 @@ export default function App() {
           </View>
         </ScrollView>
         <AddEditDialog
-          habit={editHabit}
+          habit={selectedHabit}
           visible={isAddHabitDialogVisible}
           onClose={onDialogClose}
         />
-        {/* <DayDetailsModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        date={modalDate}
-        habits={habits}
-        habitData={habitData}
-      /> */}
       </SafeAreaView>
     </GestureHandlerRootView>
   );
