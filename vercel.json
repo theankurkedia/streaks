@@ -1,6 +1,13 @@
 {
+  "version": 2,
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": "web-build",
+  "outputDirectory": ".next",
   "framework": "nextjs",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ]
 }
