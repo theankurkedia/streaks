@@ -11,8 +11,7 @@
     "build:web": "next build",
     "vercel-build": "next build",
     "test": "jest --watchAll",
-    "lint": "expo lint",
-    "export": "next export"
+    "lint": "expo lint"
   },
   "jest": {
     "preset": "jest-expo"
