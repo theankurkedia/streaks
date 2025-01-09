@@ -1,7 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": ".next",
   "framework": "nextjs",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "builds": [
@@ -11,5 +10,6 @@
     }
   ],
   "trailingSlash": true,
+  "distDir": ".next",
   "output": "export"
 }
