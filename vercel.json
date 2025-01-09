@@ -9,5 +9,7 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ]
+  ],
+  "trailingSlash": true,
+  "output": "export"
 }
