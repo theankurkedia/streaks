@@ -8,9 +8,9 @@ A habit tracking app
 - [x] Mark habit as done
 - [x] Show year in the habits
 - [x] Edit/delete habit
-- [ ] Add customizations
+- [x] Add customizations
   - [x] description
-  - [ ] color
+  - [x] color
   - [x] icon
 - [ ] Add option to mark past date
 - [ ] Release
