@@ -41,6 +41,6 @@ export const COLORS_PALETTE = [
   '#66BB6A',
   '#277da1',
   '#577590',
+  '#687076',
   '#FFFFFF',
-  '#000000',
 ];
