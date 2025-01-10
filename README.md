@@ -13,7 +13,7 @@ A habit tracking app
   - [ ] color
   - [x] icon
 - [ ] Add option to mark past date
-- [ ] Release
+- [ ] Release for Android / Web PWA
 - [ ] Add reminders
 - [ ] Add screen widgets
 - [ ] Show analytics
