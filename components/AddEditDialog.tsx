@@ -1,25 +1,23 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { icons, Trash, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  Alert,
+  View,
 } from 'react-native';
-import { icons, X, Trash } from 'lucide-react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
-  interpolate,
-  Extrapolate,
 } from 'react-native-reanimated';
-import { Habit } from '../types';
 import { useHabitsStore } from '../store';
+import { Habit } from '../types';
 import { DeleteDialog } from './DeleteDialog';
+import { COLORS_PALETTE } from '../constants/Colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PADDING_HORIZONTAL = 20;
@@ -63,6 +61,8 @@ export function AddEditDialog(props: Props) {
   useEffect(() => {
     if (props.habit) {
       setSelectedHabit(props.habit);
+    } else {
+      setSelectedHabit(undefined);
     }
   }, [props.habit]);
 
@@ -105,6 +105,24 @@ export function AddEditDialog(props: Props) {
 
   const visibleIcons = getVisibleIcons(iconSearch, props.habit?.icon);
 
+  const renderColorGrid = () => (
+    <View style={styles.colorContainer}>
+      {COLORS_PALETTE.map(color => (
+        <TouchableOpacity
+          key={color}
+          style={[
+            styles.colorButton,
+            { backgroundColor: color },
+            selectedHabit?.color === color && styles.selectedColorButton,
+          ]}
+          onPress={() =>
+            setSelectedHabit(prev => ({ ...(prev ?? {}), color }) as Habit)
+          }
+        />
+      ))}
+    </View>
+  );
+
   return (
     <>
       <Animated.View style={[styles.bottomSheetContainer, rBottomSheetStyle]}>
@@ -125,47 +143,70 @@ export function AddEditDialog(props: Props) {
             </TouchableOpacity>
           )}
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Habit Name"
-          placeholderTextColor="#6B7280"
-          value={selectedHabit?.name}
-          onChangeText={text =>
-            setSelectedHabit(prev => ({ ...(prev ?? {}), name: text }) as Habit)
-          }
-        />
-        <Text style={styles.subtitle}>Select an Icon</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Search icons..."
-          placeholderTextColor="#6B7280"
-          value={iconSearch}
-          onChangeText={setIconSearch}
-        />
-        <ScrollView
-          style={styles.iconGrid}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.iconContainer}>
-            {visibleIcons.map(([name, Icon]) => (
-              <TouchableOpacity
-                key={name}
-                style={[
-                  styles.iconButton,
-                  selectedHabit?.icon === name && styles.selectedIconButton,
-                ]}
-                onPress={() =>
-                  setSelectedHabit(
-                    prev => ({ ...(prev ?? {}), icon: name }) as Habit
-                  )
-                }
-              >
-                <Icon
-                  color={selectedHabit?.icon === name ? '#fff' : '#6B7280'}
-                  size={24}
-                />
-              </TouchableOpacity>
-            ))}
+        <ScrollView>
+          <TextInput
+            style={styles.input}
+            placeholder="Habit Name"
+            placeholderTextColor="#6B7280"
+            value={selectedHabit?.name ?? ''}
+            onChangeText={text =>
+              setSelectedHabit(
+                prev => ({ ...(prev ?? {}), name: text }) as Habit
+              )
+            }
+          />
+          <View>
+            <Text style={styles.subtitle}>Description</Text>
+            <TextInput
+              style={styles.input}
+              placeholderTextColor="#6B7280"
+              value={selectedHabit?.description}
+              onChangeText={text =>
+                setSelectedHabit(
+                  prev => ({ ...(prev ?? {}), description: text }) as Habit
+                )
+              }
+            />
+          </View>
+          <View>
+            <Text style={styles.subtitle}>Select an Icon</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Search icons..."
+              placeholderTextColor="#6B7280"
+              value={iconSearch}
+              onChangeText={setIconSearch}
+            />
+          </View>
+          <ScrollView
+            style={styles.iconGrid}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.iconContainer}>
+              {visibleIcons.map(([name, Icon]) => (
+                <TouchableOpacity
+                  key={name}
+                  style={[
+                    styles.iconButton,
+                    selectedHabit?.icon === name && styles.selectedIconButton,
+                  ]}
+                  onPress={() =>
+                    setSelectedHabit(
+                      prev => ({ ...(prev ?? {}), icon: name }) as Habit
+                    )
+                  }
+                >
+                  <Icon
+                    color={selectedHabit?.icon === name ? '#fff' : '#6B7280'}
+                    size={24}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+          <View>
+            <Text style={styles.subtitle}>Select a Color</Text>
+            <View style={styles.colorGrid}>{renderColorGrid()}</View>
           </View>
         </ScrollView>
         <TouchableOpacity
@@ -243,9 +284,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#fff',
-    fontSize: 16,
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 4,
     paddingHorizontal: 20,
   },
   input: {
@@ -253,13 +294,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     borderRadius: 4,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 8,
     marginHorizontal: 20,
   },
   iconGrid: {
     flex: 1,
     paddingHorizontal: PADDING_HORIZONTAL,
-    marginBottom: 80,
+    marginBottom: 16,
   },
   iconContainer: {
     flexDirection: 'row',
@@ -283,5 +324,26 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 4,
     marginLeft: 'auto',
+  },
+  colorGrid: {
+    paddingHorizontal: PADDING_HORIZONTAL,
+    marginBottom: 16,
+  },
+  colorContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginTop: 8,
+  },
+  colorButton: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: '100%',
+    margin: ICON_MARGIN,
+    borderWidth: 2,
+    borderColor: '#374151',
+  },
+  selectedColorButton: {
+    borderColor: '#fff',
   },
 });

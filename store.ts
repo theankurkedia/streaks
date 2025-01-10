@@ -35,7 +35,11 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
   },
   addHabit: async (habit: Habit) => {
     const habits = get().habits;
-    habits.push({ ...habit, id: Math.random().toString(36).substring(2, 10) });
+    habits.push({
+      ...habit,
+      id: Math.random().toString(36).substring(2, 10),
+      createdAt: new Date().toISOString(),
+    });
     set({ habits });
     await saveHabitsData(habits);
   },

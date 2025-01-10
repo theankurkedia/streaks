@@ -22,6 +22,8 @@ export default function App() {
   const openAddEditDialog = (habit?: Habit) => {
     if (habit) {
       setSelectedHabit(habit);
+    } else {
+      setSelectedHabit(undefined);
     }
     setIsAddHabitDialogVisible(true);
   };
