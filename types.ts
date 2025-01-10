@@ -4,6 +4,7 @@ export interface Habit {
   description: string;
   icon: string;
   color: string;
+  createdAt: string;
 }
 
 export interface Completion {

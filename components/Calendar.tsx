@@ -11,6 +11,7 @@ import { useHabitsStore } from '../store';
 import { Habit } from '../types';
 import { Check } from 'lucide-react-native';
 import Icon from './Icon';
+import { DEFAULT_COLOR } from '../constants/Colors';
 
 interface Props {
   habit: Habit;
@@ -53,7 +54,7 @@ export function Calendar({ habit, onClick }: Props) {
   if (!habit) return null;
 
   const getContributionColor = (completed: boolean) => {
-    return completed ? '#39D353' : '#161B22';
+    return completed ? habit?.color || DEFAULT_COLOR : '#161B22';
   };
 
   const getContributionCount = () => {
@@ -128,7 +129,10 @@ export function Calendar({ habit, onClick }: Props) {
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.todayButton}
+          style={[
+            styles.todayButton,
+            { backgroundColor: habit?.color || DEFAULT_COLOR },
+          ]}
           onPress={e => {
             e.stopPropagation();
             toggleHabitCompletion(formatDate(new Date()), habit.id);
@@ -199,7 +203,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   todayButton: {
-    backgroundColor: '#238636',
     padding: 8,
     borderRadius: 6,
   },
