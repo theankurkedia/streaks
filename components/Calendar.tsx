@@ -9,9 +9,9 @@ import {
 import { formatDate } from '../utils/date';
 import { useHabitsStore } from '../store';
 import { Habit } from '../types';
-import { Check } from 'lucide-react-native';
+import { Check, Undo } from 'lucide-react-native';
 import Icon from './Icon';
-import { DEFAULT_COLOR } from '../constants/Colors';
+import { COLORS_PALETTE } from '../constants/Colors';
 
 interface Props {
   habit: Habit;
@@ -30,6 +30,7 @@ export function Calendar({ habit, onClick }: Props) {
   const { getHabitCompletions, toggleHabitCompletion } = useHabitsStore();
 
   const habitCompletions = getHabitCompletions(habit.id);
+  const isTodayCompleted = habitCompletions?.[formatDate(new Date())] ?? false;
 
   const calendarData = useMemo(() => {
     if (!habit) return [];
@@ -54,7 +55,7 @@ export function Calendar({ habit, onClick }: Props) {
   if (!habit) return null;
 
   const getContributionColor = (completed: boolean) => {
-    return completed ? habit?.color || DEFAULT_COLOR : '#161B22';
+    return completed ? habit?.color || COLORS_PALETTE[0] : '#161B22';
   };
 
   const getContributionCount = () => {
@@ -131,14 +132,18 @@ export function Calendar({ habit, onClick }: Props) {
         <TouchableOpacity
           style={[
             styles.todayButton,
-            { backgroundColor: habit?.color || DEFAULT_COLOR },
+            { backgroundColor: habit?.color || COLORS_PALETTE[0] },
           ]}
           onPress={e => {
             e.stopPropagation();
             toggleHabitCompletion(formatDate(new Date()), habit.id);
           }}
         >
-          <Check color="#fff" size={20} />
+          {isTodayCompleted ? (
+            <Undo color="#fff" size={20} />
+          ) : (
+            <Check color="#fff" size={20} />
+          )}
         </TouchableOpacity>
       </TouchableOpacity>
 

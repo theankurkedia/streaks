@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -55,8 +56,14 @@ export function AddEditDialog(props: Props) {
   );
   const [iconSearch, setIconSearch] = useState('');
   const { addHabit, editHabit: editHabitStore, deleteHabit } = useHabitsStore();
-  const translateY = useSharedValue(SCREEN_HEIGHT);
+  const translateY = useSharedValue(props.visible ? 0 : SCREEN_HEIGHT);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   useEffect(() => {
     if (props.habit) {
@@ -64,12 +71,15 @@ export function AddEditDialog(props: Props) {
     } else {
       setSelectedHabit(undefined);
     }
+    setIconSearch('');
   }, [props.habit]);
 
   useEffect(() => {
-    translateY.value = withSpring(props.visible ? 0 : SCREEN_HEIGHT, {
-      damping: 50,
-      stiffness: 100,
+    requestAnimationFrame(() => {
+      translateY.value = withSpring(props.visible ? 0 : SCREEN_HEIGHT, {
+        damping: 50,
+        stiffness: 100,
+      });
     });
   }, [props.visible]);
 
@@ -113,7 +123,9 @@ export function AddEditDialog(props: Props) {
           style={[
             styles.colorButton,
             { backgroundColor: color },
-            selectedHabit?.color === color && styles.selectedColorButton,
+            (selectedHabit?.color
+              ? selectedHabit.color === color
+              : COLORS_PALETTE[0] === color) && styles.selectedColorButton,
           ]}
           onPress={() =>
             setSelectedHabit(prev => ({ ...(prev ?? {}), color }) as Habit)
@@ -123,10 +135,17 @@ export function AddEditDialog(props: Props) {
     </View>
   );
 
+  if (!isMounted) return null;
+
   return (
     <>
-      <Animated.View style={[styles.bottomSheetContainer, rBottomSheetStyle]}>
-        <View style={styles.line} />
+      <Animated.View
+        style={[
+          styles.bottomSheetContainer,
+          rBottomSheetStyle,
+          { transform: [{ translateY: props.visible ? 0 : SCREEN_HEIGHT }] },
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={props.onClose}>
             <X color="#fff" size={24} />
@@ -154,6 +173,7 @@ export function AddEditDialog(props: Props) {
                 prev => ({ ...(prev ?? {}), name: text }) as Habit
               )
             }
+            underlineColorAndroid="transparent"
           />
           <View>
             <Text style={styles.subtitle}>Description</Text>
@@ -240,19 +260,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 25,
     zIndex: 1000,
   },
-  line: {
-    width: 75,
-    height: 4,
-    backgroundColor: '#6B7280',
-    alignSelf: 'center',
-    marginVertical: 15,
-    borderRadius: 2,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   closeButton: {
     padding: 4,
@@ -296,6 +308,15 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
     marginHorizontal: 20,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+        outline: 'none',
+        borderWidth: 0,
+      },
+    }),
   },
   iconGrid: {
     flex: 1,
