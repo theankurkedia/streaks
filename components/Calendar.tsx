@@ -12,6 +12,7 @@ import { Habit } from '../types';
 import { Check, Undo } from 'lucide-react-native';
 import Icon from './Icon';
 import { COLORS_PALETTE } from '../constants/Colors';
+import { cancelScheduledNotification } from '../src/utils/notifications';
 
 interface Props {
   habit: Habit;
@@ -49,6 +50,7 @@ export function Calendar({ habit, onClick }: Props) {
   }, [habit?.id, JSON.stringify(habitCompletions)]); // Use JSON.stringify in the dependency array instead
 
   useEffect(() => {
+    cancelScheduledNotification(habit?.id);
     scrollViewRef.current?.scrollToEnd({ animated: false });
   }, []);
 

@@ -1,6 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Calendar } from '../components/Calendar';
 import { AddEditDialog } from '../components/AddEditDialog';
 import { AppBar } from '../components/AppBar';
@@ -8,15 +14,25 @@ import { useHabitsStore } from '../store';
 import { CalendarSkeleton } from '../components/CalendarSkeleton';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Habit } from '../types';
+import { registerForPushNotificationsAsync } from '../src/utils/notifications';
 
 export default function App() {
   const [selectedHabit, setSelectedHabit] = useState<Habit>();
   const [isAddHabitDialogVisible, setIsAddHabitDialogVisible] = useState(false);
 
-  const { habits, initialiseData, isInitialising } = useHabitsStore();
+  const { habits, initialiseData, isInitialising, saveNotifToken } =
+    useHabitsStore();
 
   useEffect(() => {
     initialiseData();
+    if (Platform.OS === 'android') {
+      registerForPushNotificationsAsync().then(token => {
+        if (token) {
+          // Store token in your backend or local storage
+          // saveNotifToken(token.data);
+        }
+      });
+    }
   }, []);
 
   const openAddEditDialog = (habit?: Habit) => {
