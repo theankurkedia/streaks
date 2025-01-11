@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { Completion, Habit } from './types';
 import {
   getHabitCompletionsFromDb,
   getHabitsData,
   saveCompletionsData,
   saveHabitsData,
 } from './services/db';
+import { Completion, Habit } from './types';
 
 interface HabitsStore {
   habits: Habit[];

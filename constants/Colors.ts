@@ -25,8 +25,8 @@ export const Colors = {
   },
 };
 
-export const DEFAULT_COLOR = '#39D353';
 export const COLORS_PALETTE = [
+  '#39D353',
   '#f94144',
   '#f8961e',
   '#f9844a',

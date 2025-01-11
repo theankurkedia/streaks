@@ -12,9 +12,10 @@ A habit tracking app
   - [x] description
   - [x] color
   - [x] icon
+- [ ] Add reminders
+- [ ] Add frequency options
 - [ ] Add option to mark past date
 - [ ] Release for Android / Web PWA
-- [ ] Add reminders
 - [ ] Add screen widgets
 - [ ] Show analytics
 - [ ] Add export/import for the data
