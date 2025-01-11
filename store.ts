@@ -9,16 +9,18 @@ import { Completion, Habit } from './types';
 
 interface HabitsStore {
   habits: Habit[];
+  completions: Completion;
+  notifToken?: string;
   isInitialising: boolean;
   initialiseData: () => Promise<void>;
   addHabit: (habit: Habit) => Promise<void>;
   editHabit: (habit: Habit) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
-  completions: Completion;
   getHabitCompletions: (habitId: string) => {
     [date: string]: boolean;
   };
   toggleHabitCompletion: (date: string, habitId: string) => Promise<void>;
+  saveNotifToken: (token: string) => void;
 }
 
 export const useHabitsStore = create<HabitsStore>((set, get) => ({
@@ -76,4 +78,5 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     set({ completions });
     await saveCompletionsData(completions);
   },
+  saveNotifToken: (token: string) => set({ notifToken: token }),
 }));

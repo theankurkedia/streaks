@@ -5,6 +5,7 @@ export interface Habit {
   icon: string;
   color: string;
   createdAt: string;
+  dailyReminderTime: string;
 }
 
 export interface Completion {

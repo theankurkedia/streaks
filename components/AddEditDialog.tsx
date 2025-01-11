@@ -19,6 +19,13 @@ import { useHabitsStore } from '../store';
 import { Habit } from '../types';
 import { DeleteDialog } from './DeleteDialog';
 import { COLORS_PALETTE } from '../constants/Colors';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import {
+  cancelScheduledNotification,
+  setHabitReminder,
+} from '../src/utils/notifications';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PADDING_HORIZONTAL = 20;
@@ -32,6 +39,10 @@ interface Props {
   onClose: () => void;
   habit?: Habit;
 }
+
+const formatTime = (hours: number, minutes: number): string => {
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
 
 const getVisibleIcons = (iconSearch: string, selectedIcon?: string) => {
   const allIcons = Object.entries(icons);
@@ -59,6 +70,7 @@ export function AddEditDialog(props: Props) {
   const translateY = useSharedValue(props.visible ? 0 : SCREEN_HEIGHT);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -89,13 +101,26 @@ export function AddEditDialog(props: Props) {
     };
   });
 
-  const handleAddHabit = () => {
+  const handleAddHabit = async () => {
     if (!selectedHabit?.name) return;
 
     if (props.habit) {
       editHabitStore(selectedHabit);
     } else {
       addHabit(selectedHabit);
+    }
+
+    if (selectedHabit.dailyReminderTime) {
+      const [hours, minutes] = selectedHabit.dailyReminderTime
+        .split(':')
+        .map(Number);
+      // Cancel existing notification if editing
+      if (props.habit?.id) {
+        await cancelScheduledNotification(props.habit.id);
+      }
+
+      // Schedule new notification
+      await setHabitReminder({ habitName: selectedHabit.name, hours, minutes });
     }
     setSelectedHabit(undefined);
     props.onClose();
@@ -105,8 +130,9 @@ export function AddEditDialog(props: Props) {
     setShowDeleteDialog(true);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (props.habit?.id) {
+      await cancelScheduledNotification(props.habit.id);
       deleteHabit(props.habit.id);
       setShowDeleteDialog(false);
       props.onClose();
@@ -114,6 +140,24 @@ export function AddEditDialog(props: Props) {
   }, [props.habit?.id, deleteHabit, props.onClose]);
 
   const visibleIcons = getVisibleIcons(iconSearch, props.habit?.icon);
+
+  const handleTimeChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    setShowTimePicker(false);
+    if (event.type === 'set' && selectedDate) {
+      const hours = selectedDate.getHours();
+      const minutes = selectedDate.getMinutes();
+      setSelectedHabit(
+        prev =>
+          ({
+            ...(prev ?? {}),
+            dailyReminderTime: formatTime(hours, minutes),
+          }) as Habit
+      );
+    }
+  };
 
   const renderColorGrid = () => (
     <View style={styles.colorContainer}>
@@ -161,6 +205,16 @@ export function AddEditDialog(props: Props) {
               <Trash color="#fff" size={20} />
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            style={[
+              styles.headerButton,
+              { opacity: selectedHabit?.name ? 1 : 0.5 },
+            ]}
+            onPress={handleAddHabit}
+            disabled={!selectedHabit?.name}
+          >
+            <Text style={styles.headerButtonText}>Save</Text>
+          </TouchableOpacity>
         </View>
         <ScrollView>
           <TextInput
@@ -224,21 +278,44 @@ export function AddEditDialog(props: Props) {
               ))}
             </View>
           </ScrollView>
+          {Platform.OS === 'android' && (
+            <View>
+              <Text style={styles.subtitle}>Daily Reminder Time</Text>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                style={styles.input}
+              >
+                <Text
+                  style={[
+                    styles.timeText,
+                    !selectedHabit?.dailyReminderTime && styles.placeholderText,
+                  ]}
+                >
+                  {selectedHabit?.dailyReminderTime
+                    ? selectedHabit.dailyReminderTime
+                    : 'Select time'}
+                </Text>
+              </TouchableOpacity>
+              {showTimePicker && (
+                <DateTimePicker
+                  value={
+                    selectedHabit?.dailyReminderTime
+                      ? new Date(selectedHabit.dailyReminderTime)
+                      : new Date()
+                  }
+                  mode="time"
+                  is24Hour={true}
+                  display={'default'}
+                  onChange={handleTimeChange}
+                />
+              )}
+            </View>
+          )}
           <View>
             <Text style={styles.subtitle}>Select a Color</Text>
             <View style={styles.colorGrid}>{renderColorGrid()}</View>
           </View>
         </ScrollView>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            { opacity: selectedHabit?.name ? 1 : 0.5 },
-          ]}
-          onPress={handleAddHabit}
-          disabled={!selectedHabit?.name}
-        >
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
       </Animated.View>
       <DeleteDialog
         visible={showDeleteDialog}
@@ -276,23 +353,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
-  saveButton: {
+  headerButton: {
     backgroundColor: '#3B82F6',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: 8,
   },
-  saveButtonText: {
+  headerButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 14,
   },
   subtitle: {
     color: '#fff',
@@ -321,7 +392,7 @@ const styles = StyleSheet.create({
   iconGrid: {
     flex: 1,
     paddingHorizontal: PADDING_HORIZONTAL,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   iconContainer: {
     flexDirection: 'row',
@@ -340,7 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 8,
   },
   deleteButton: {
     padding: 4,
@@ -348,7 +419,7 @@ const styles = StyleSheet.create({
   },
   colorGrid: {
     paddingHorizontal: PADDING_HORIZONTAL,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   colorContainer: {
     flexDirection: 'row',
@@ -366,5 +437,12 @@ const styles = StyleSheet.create({
   },
   selectedColorButton: {
     borderColor: '#fff',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  placeholderText: {
+    color: '#6B7280',
   },
 });
