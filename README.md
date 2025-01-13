@@ -1,4 +1,4 @@
-# Streaks
+# Gryd
 
 A habit tracking app
 
