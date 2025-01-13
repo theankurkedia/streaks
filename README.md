@@ -1,4 +1,4 @@
-# Streaks
+# Gryd
 
 A habit tracking app
 
@@ -12,8 +12,8 @@ A habit tracking app
   - [x] description
   - [x] color
   - [x] icon
+- [x] Add reminders
 - [ ] Release for Android / Web PWA
-- [ ] Add reminders
 - [ ] Add frequency options
 - [ ] Add option to mark past date
 - [ ] Add screen widgets

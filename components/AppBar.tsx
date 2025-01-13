@@ -9,7 +9,7 @@ interface AppBarProps {
 export function AppBar({ onAddHabit }: AppBarProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Streaks</Text>
+      <Text style={styles.title}>Gryd</Text>
       <TouchableOpacity onPress={() => onAddHabit()} style={styles.addButton}>
         <Plus color="#fff" size={24} />
       </TouchableOpacity>

@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Completion, Habit, Storage } from '../types';
 
-const STORAGE_HABITS_KEY = 'streaks-habits';
-const STORAGE_COMPLETE_KEY = 'streaks-completions';
+const STORAGE_HABITS_KEY = 'gryd-habits';
+const STORAGE_COMPLETE_KEY = 'gryd-completions';
 
 // Get habits data
 export const getHabitsData = async (): Promise<Habit[]> => {
