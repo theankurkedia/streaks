@@ -9,7 +9,7 @@ import {
 import { formatDate } from '../utils/date';
 import { useHabitsStore } from '../store';
 import { Habit } from '../types';
-import { Check, Undo } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import Icon from './Icon';
 import { COLORS_PALETTE } from '../constants/Colors';
 import { cancelScheduledNotification } from '../src/utils/notifications';
@@ -38,16 +38,36 @@ export function Calendar({ habit, onClick }: Props) {
 
     const habitData = getHabitCompletions(habit?.id);
     const today = new Date();
-    return Array.from({ length: TOTAL_DAYS }, (_, index) => {
+    const daysUntilEndOfWeek = 6 - today.getDay(); // Days remaining until Saturday
+    const totalDaysToShow = TOTAL_DAYS - daysUntilEndOfWeek; // Reduce past days to accommodate future days
+
+    // Get past dates up to today
+    const pastDates = Array.from({ length: totalDaysToShow }, (_, index) => {
       const date = new Date(today);
-      date.setDate(today.getDate() - (TOTAL_DAYS - 1 - index));
+      date.setDate(today.getDate() - (totalDaysToShow - 1 - index));
       const dateString = formatDate(date);
       return {
         date: dateString,
         completed: habitData?.[dateString] || false,
       };
     });
-  }, [habit?.id, JSON.stringify(habitCompletions)]); // Use JSON.stringify in the dependency array instead
+
+    // Add future dates to complete the week
+    const futureDates = Array.from(
+      { length: daysUntilEndOfWeek },
+      (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + index + 1);
+        const dateString = formatDate(date);
+        return {
+          date: dateString,
+          completed: false,
+        };
+      }
+    );
+
+    return [...pastDates, ...futureDates];
+  }, [habit?.id, JSON.stringify(habitCompletions)]);
 
   useEffect(() => {
     cancelScheduledNotification(habit?.id);
@@ -119,6 +139,7 @@ export function Calendar({ habit, onClick }: Props) {
       </Text>
     ));
   };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.header} onPress={onClick}>
@@ -134,18 +155,18 @@ export function Calendar({ habit, onClick }: Props) {
         <TouchableOpacity
           style={[
             styles.todayButton,
-            { backgroundColor: habit?.color || COLORS_PALETTE[0] },
+            {
+              backgroundColor: isTodayCompleted
+                ? habit?.color || COLORS_PALETTE[0]
+                : '#161B22',
+            },
           ]}
           onPress={e => {
             e.stopPropagation();
             toggleHabitCompletion(formatDate(new Date()), habit.id);
           }}
         >
-          {isTodayCompleted ? (
-            <Undo color="#fff" size={20} />
-          ) : (
-            <Check color="#fff" size={20} />
-          )}
+          <Check color="#fff" size={20} />
         </TouchableOpacity>
       </TouchableOpacity>
 
